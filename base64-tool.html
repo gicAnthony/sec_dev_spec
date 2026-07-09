@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Token Encoder Decoder</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f2f6f9;
+      --panel: #ffffff;
+      --soft: #eef4f8;
+      --text: #10233d;
+      --muted: #607081;
+      --border: #d9e1e8;
+      --accent: #173a67;
+      --accent-strong: #0f2d50;
+      --nav: #102f52;
+      --nav-strong: #0b2441;
+      --rail: #ffffff;
+      --danger: #b42318;
+      --success: #0b7a4b;
+      --warning: #9a6700;
+      --shadow: 0 12px 30px rgba(16, 47, 82, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 30px 0;
+    }
+
+    .app-bar {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--nav);
+      color: #fff;
+      padding: 0 14px 0 10px;
+      border-bottom: 1px solid var(--nav-strong);
+    }
+
+    .launcher {
+      width: 17px;
+      display: grid;
+      grid-template-columns: repeat(3, 4px);
+      gap: 3px;
+      flex: 0 0 auto;
+    }
+
+    .launcher span {
+      width: 4px;
+      height: 4px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .brand-copy {
+      display: grid;
+      gap: 1px;
+      font-size: 8px;
+      font-weight: 700;
+      line-height: 1.05;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+
+    .brand-copy small {
+      font-size: 7px;
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      opacity: 0.8;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      min-height: calc(100vh - 40px);
+    }
+
+    .rail {
+      background: var(--rail);
+      border-right: 1px solid var(--border);
+      padding-top: 14px;
+    }
+
+    .rail nav {
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+    }
+
+    .rail-button {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      color: var(--muted);
+      padding: 0;
+    }
+
+    .rail-button.active {
+      color: var(--accent);
+    }
+
+    .rail-button svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 78px;
+      margin-bottom: 18px;
+      padding: 0 2px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(28px, 4vw, 44px);
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      max-width: 780px;
+    }
+
+    .tool {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+      min-height: 44px;
+      border: 0;
+      border-bottom: 3px solid transparent;
+      border-radius: 0;
+      padding: 8px 14px;
+      color: var(--muted);
+    }
+
+    .tab.active {
+      border-bottom-color: var(--accent);
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .segmented {
+      display: inline-grid;
+      grid-template-columns: repeat(2, minmax(110px, 1fr));
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .segmented input {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .segmented label {
+      min-height: 40px;
+      display: grid;
+      place-items: center;
+      padding: 8px 14px;
+      color: var(--muted);
+      cursor: pointer;
+      border-right: 1px solid var(--border);
+      user-select: none;
+    }
+
+    .segmented label:last-child {
+      border-right: 0;
+    }
+
+    .segmented input:checked + label {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .checkbox {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      min-height: 40px;
+      color: var(--muted);
+      user-select: none;
+    }
+
+    button {
+      min-height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text);
+      padding: 8px 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    button:hover,
+    button:focus-visible {
+      border-color: var(--accent-strong);
+      outline: 2px solid transparent;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .token-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.85fr) minmax(360px, 1.15fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    label,
+    .label {
+      font-weight: 700;
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    textarea,
+    pre {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--panel) 88%, var(--bg));
+      color: var(--text);
+      padding: 12px;
+      font: 14px/1.5 Consolas, Monaco, "Courier New", monospace;
+    }
+
+    textarea {
+      min-height: 300px;
+      resize: vertical;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+      outline: 3px solid color-mix(in srgb, var(--accent) 24%, transparent);
+    }
+
+    pre {
+      min-height: 188px;
+      margin: 0;
+      overflow: auto;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .claim-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+    }
+
+    .claim-row {
+      display: grid;
+      grid-template-columns: minmax(90px, 0.35fr) minmax(0, 1fr);
+      gap: 10px;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--soft);
+    }
+
+    .claim-key {
+      color: var(--muted);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .claim-value {
+      overflow-wrap: anywhere;
+    }
+
+    .result-stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .status {
+      min-height: 24px;
+      margin-top: 12px;
+      color: var(--muted);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .status.ok {
+      color: var(--success);
+    }
+
+    .status.warn {
+      color: var(--warning);
+    }
+
+    @media (max-width: 860px) {
+      main {
+        width: min(100% - 20px, 1180px);
+        padding: 18px 0;
+      }
+
+      .tool {
+        padding: 12px;
+      }
+
+      .controls,
+      .group {
+        align-items: stretch;
+      }
+
+      .group,
+      button,
+      .segmented {
+        width: 100%;
+      }
+
+      .grid,
+      .token-grid {
+        grid-template-columns: 1fr;
+      }
+
+      textarea {
+        min-height: 220px;
+      }
+
+      .claim-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-bar">
+    <div class="launcher" aria-hidden="true">
+      <span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+    </div>
+    <div class="brand" aria-label="GIC GAP Infrastructure Corporation">
+      <div class="brand-mark">GIC</div>
+      <div class="brand-copy">
+        <span>GAP Infrastructure</span>
+        <span>Corporation</span>
+        <small>Changing Lives</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="rail" aria-label="Navigation">
+      <nav>
+        <button class="rail-button active" type="button" aria-label="Home">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8"></path><path d="M5 10v10h5v-6h4v6h5V10"></path></svg>
+        </button>
+        <button class="rail-button" type="button" aria-label="Global">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3c2.3 2.5 3.5 5.5 3.5 9S14.3 18.5 12 21"></path><path d="M12 3c-2.3 2.5-3.5 5.5-3.5 9s1.2 6.5 3.5 9"></path></svg>
+        </button>
+        <button class="rail-button" type="button" aria-label="Tokens">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"></rect><path d="M7 10h3"></path><path d="M7 14h7"></path><path d="M16 10h1"></path><path d="M16 14h1"></path></svg>
+        </button>
+        <button class="rail-button" type="button" aria-label="Documents">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5"></path></svg>
+        </button>
+        <button class="rail-button" type="button" aria-label="Tables">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1"></rect><path d="M4 9h16"></path><path d="M4 14h16"></path><path d="M9 4v16"></path></svg>
+        </button>
+      </nav>
+    </aside>
+
+    <main>
+      <header>
+        <div>
+          <h1>Token Encoder Decoder</h1>
+          <p class="subtitle">Work with Base64, Base64URL, JWTs, and bearer-style access tokens locally in your browser.</p>
+        </div>
+      </header>
+
+      <section class="tool" aria-label="Token utility">
+      <nav class="tabs" aria-label="Tool tabs">
+        <button class="tab active" type="button" data-tab="base64-panel">Base64</button>
+        <button class="tab" type="button" data-tab="jwt-panel">JWT / Access Token</button>
+      </nav>
+
+      <section class="panel active" id="base64-panel" aria-label="Base64 tool">
+        <div class="controls">
+          <div class="group" aria-label="Format">
+            <div class="segmented">
+              <input type="radio" name="format" id="format-base64" value="base64" checked>
+              <label for="format-base64">Base64</label>
+              <input type="radio" name="format" id="format-base64url" value="base64url">
+              <label for="format-base64url">Base64URL</label>
+            </div>
+            <label class="checkbox">
+              <input type="checkbox" id="omit-padding">
+              Omit padding
+            </label>
+          </div>
+
+          <div class="group" aria-label="Base64 actions">
+            <button class="primary" id="encode" type="button">Encode</button>
+            <button class="primary" id="decode" type="button">Decode</button>
+            <button id="swap" type="button">Swap</button>
+            <button id="copy" type="button">Copy Output</button>
+            <button id="clear" type="button">Clear</button>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <div class="label-row">
+              <label for="input">Input</label>
+              <span class="count" id="input-count">0 chars</span>
+            </div>
+            <textarea id="input" spellcheck="false" placeholder="Type or paste text here"></textarea>
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="output">Output</label>
+              <span class="count" id="output-count">0 chars</span>
+            </div>
+            <textarea id="output" spellcheck="false" placeholder="Result appears here"></textarea>
+          </div>
+        </div>
+
+        <div class="status" id="status" role="status" aria-live="polite">Ready.</div>
+      </section>
+
+      <section class="panel" id="jwt-panel" aria-label="JWT and access token tool">
+        <div class="controls">
+          <div>
+            <h2>JWT / Access Token Decoder</h2>
+            <p class="subtitle">Decodes JWT structure and claims. Opaque access tokens cannot be decoded without the issuer.</p>
+          </div>
+          <div class="group" aria-label="JWT actions">
+            <button class="primary" id="decode-jwt" type="button">Decode Token</button>
+            <button id="copy-jwt-json" type="button">Copy JSON</button>
+            <button id="clear-jwt" type="button">Clear</button>
+          </div>
+        </div>
+
+        <div class="token-grid">
+          <div class="field">
+            <div class="label-row">
+              <label for="jwt-input">Token</label>
+              <span class="count" id="jwt-count">0 chars</span>
+            </div>
+            <textarea id="jwt-input" spellcheck="false" placeholder="Paste a JWT, access_token value, or Authorization: Bearer token"></textarea>
+            <div class="status" id="jwt-status" role="status" aria-live="polite">Ready.</div>
+          </div>
+
+          <div class="result-stack">
+            <div class="field">
+              <div class="label-row">
+                <span class="label">Claim Summary</span>
+                <span class="count" id="jwt-part-count">0 parts</span>
+              </div>
+              <div class="claim-list" id="claim-summary"></div>
+            </div>
+
+            <div class="grid">
+              <div class="field">
+                <span class="label">Header</span>
+                <pre id="jwt-header">{}</pre>
+              </div>
+              <div class="field">
+                <span class="label">Payload</span>
+                <pre id="jwt-payload">{}</pre>
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="label">Signature / Notes</span>
+              <pre id="jwt-signature">No token decoded.</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const input = document.getElementById("input");
+    const output = document.getElementById("output");
+    const status = document.getElementById("status");
+    const omitPadding = document.getElementById("omit-padding");
+    const inputCount = document.getElementById("input-count");
+    const outputCount = document.getElementById("output-count");
+    const jwtInput = document.getElementById("jwt-input");
+    const jwtStatus = document.getElementById("jwt-status");
+    const jwtCount = document.getElementById("jwt-count");
+    const jwtPartCount = document.getElementById("jwt-part-count");
+    const claimSummary = document.getElementById("claim-summary");
+    const jwtHeader = document.getElementById("jwt-header");
+    const jwtPayload = document.getElementById("jwt-payload");
+    const jwtSignature = document.getElementById("jwt-signature");
+    let lastJwtJson = "";
+
+    function selectedFormat() {
+      return document.querySelector("input[name='format']:checked").value;
+    }
+
+    function setStatus(element, message, type) {
+      element.textContent = message;
+      element.className = "status" + (type ? " " + type : "");
+    }
+
+    function updateCounts() {
+      inputCount.textContent = input.value.length + " chars";
+      outputCount.textContent = output.value.length + " chars";
+      jwtCount.textContent = jwtInput.value.length + " chars";
+    }
+
+    function bytesToBinary(bytes) {
+      let binary = "";
+      const chunkSize = 0x8000;
+
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+      }
+
+      return binary;
+    }
+
+    function encodeUtf8ToBase64(value) {
+      const bytes = new TextEncoder().encode(value);
+      return btoa(bytesToBinary(bytes));
+    }
+
+    function decodeBase64ToUtf8(value) {
+      const binary = atob(value);
+      const bytes = new Uint8Array(binary.length);
+
+      for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+
+      return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    }
+
+    function toBase64Url(value) {
+      return value.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    }
+
+    function fromBase64Url(value) {
+      const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+      const padding = normalized.length % 4;
+
+      if (padding === 1) {
+        throw new Error("Invalid Base64URL length.");
+      }
+
+      return normalized + (padding ? "=".repeat(4 - padding) : "");
+    }
+
+    function encodeValue() {
+      try {
+        let encoded = encodeUtf8ToBase64(input.value);
+
+        if (selectedFormat() === "base64url") {
+          encoded = toBase64Url(encoded);
+        } else if (omitPadding.checked) {
+          encoded = encoded.replace(/=+$/g, "");
+        }
+
+        output.value = encoded;
+        updateCounts();
+        setStatus(status, "Encoded successfully.", "ok");
+      } catch (error) {
+        setStatus(status, error.message || "Unable to encode input.", "error");
+      }
+    }
+
+    function decodeValue() {
+      try {
+        const raw = input.value.trim().replace(/\s+/g, "");
+        let normalized = selectedFormat() === "base64url" ? fromBase64Url(raw) : raw;
+        const padding = normalized.length % 4;
+
+        if (padding === 1) {
+          throw new Error("Invalid Base64 length.");
+        }
+
+        normalized += padding ? "=".repeat(4 - padding) : "";
+        output.value = decodeBase64ToUtf8(normalized);
+        updateCounts();
+        setStatus(status, "Decoded successfully.", "ok");
+      } catch (error) {
+        setStatus(status, error.message || "Unable to decode input.", "error");
+      }
+    }
+
+    async function copyText(value, statusElement) {
+      if (!value) {
+        setStatus(statusElement, "There is nothing to copy.", "error");
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(value);
+        setStatus(statusElement, "Copied.", "ok");
+      } catch (error) {
+        const helper = document.createElement("textarea");
+        helper.value = value;
+        document.body.appendChild(helper);
+        helper.select();
+        document.execCommand("copy");
+        helper.remove();
+        setStatus(statusElement, "Copied.", "ok");
+      }
+    }
+
+    function cleanToken(value) {
+      let token = value.trim();
+      token = token.replace(/^authorization\s*:\s*/i, "");
+      token = token.replace(/^bearer\s+/i, "");
+
+      if (token.includes("=") && token.includes("&")) {
+        const params = new URLSearchParams(token);
+        token = params.get("access_token") || params.get("id_token") || token;
+      }
+
+      return token.trim();
+    }
+
+    function decodeJsonPart(part, label) {
+      if (!part) {
+        throw new Error("Missing JWT " + label + ".");
+      }
+
+      return JSON.parse(decodeBase64ToUtf8(fromBase64Url(part)));
+    }
+
+    function formatJson(value) {
+      return JSON.stringify(value, null, 2);
+    }
+
+    function formatEpoch(seconds) {
+      if (typeof seconds !== "number" || !Number.isFinite(seconds)) {
+        return String(seconds);
+      }
+
+      const date = new Date(seconds * 1000);
+
+      if (Number.isNaN(date.getTime())) {
+        return String(seconds);
+      }
+
+      return date.toLocaleString() + " (" + date.toISOString() + ")";
+    }
+
+    function formatClaimValue(key, value) {
+      if (["exp", "iat", "nbf", "auth_time"].includes(key)) {
+        return formatEpoch(value);
+      }
+
+      if (Array.isArray(value)) {
+        return value.join(", ");
+      }
+
+      if (value && typeof value === "object") {
+        return JSON.stringify(value);
+      }
+
+      return value === undefined || value === null ? "" : String(value);
+    }
+
+    function addClaimRow(key, value) {
+      const row = document.createElement("div");
+      row.className = "claim-row";
+
+      const keyEl = document.createElement("div");
+      keyEl.className = "claim-key";
+      keyEl.textContent = key;
+
+      const valueEl = document.createElement("div");
+      valueEl.className = "claim-value";
+      valueEl.textContent = formatClaimValue(key, value);
+
+      row.append(keyEl, valueEl);
+      claimSummary.appendChild(row);
+    }
+
+    function renderClaimSummary(payload, header, signature) {
+      const preferred = [
+        "alg",
+        "typ",
+        "kid",
+        "iss",
+        "sub",
+        "aud",
+        "azp",
+        "client_id",
+        "scope",
+        "scp",
+        "roles",
+        "exp",
+        "nbf",
+        "iat",
+        "auth_time",
+        "jti"
+      ];
+      const values = Object.assign({}, payload, {
+        alg: header.alg,
+        typ: header.typ,
+        kid: header.kid,
+        signature: signature ? signature.length + " chars" : "none"
+      });
+
+      claimSummary.textContent = "";
+      preferred.forEach((key) => {
+        if (values[key] !== undefined) {
+          addClaimRow(key, values[key]);
+        }
+      });
+
+      const seen = new Set(preferred);
+      Object.keys(payload).sort().forEach((key) => {
+        if (!seen.has(key)) {
+          addClaimRow(key, payload[key]);
+        }
+      });
+    }
+
+    function decodeJwt() {
+      try {
+        const token = cleanToken(jwtInput.value);
+        const parts = token.split(".");
+
+        if (!token) {
+          throw new Error("Paste a JWT or bearer access token first.");
+        }
+
+        jwtPartCount.textContent = parts.length + " parts";
+
+        if (parts.length !== 3) {
+          throw new Error("This does not look like a JWT. Opaque access tokens cannot be decoded locally.");
+        }
+
+        const header = decodeJsonPart(parts[0], "header");
+        const payload = decodeJsonPart(parts[1], "payload");
+        const signature = parts[2] || "";
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        let lifecycle = "Signature is encoded but not verified. Verification requires the issuer public key or shared secret.";
+
+        if (typeof payload.exp === "number") {
+          lifecycle += payload.exp < nowSeconds ? "\nToken status: expired." : "\nToken status: not expired by exp claim.";
+        }
+
+        if (typeof payload.nbf === "number" && payload.nbf > nowSeconds) {
+          lifecycle += "\nToken status: not valid yet by nbf claim.";
+        }
+
+        jwtHeader.textContent = formatJson(header);
+        jwtPayload.textContent = formatJson(payload);
+        jwtSignature.textContent = "Base64URL signature length: " + signature.length + " chars\n\n" + lifecycle;
+        renderClaimSummary(payload, header, signature);
+        lastJwtJson = formatJson({ header, payload, signature });
+        setStatus(jwtStatus, "JWT decoded successfully. Signature not verified.", "warn");
+      } catch (error) {
+        jwtHeader.textContent = "{}";
+        jwtPayload.textContent = "{}";
+        jwtSignature.textContent = "No token decoded.";
+        claimSummary.textContent = "";
+        lastJwtJson = "";
+        setStatus(jwtStatus, error.message || "Unable to decode token.", "error");
+      }
+    }
+
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
+        document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById(tab.dataset.tab).classList.add("active");
+      });
+    });
+
+    document.getElementById("encode").addEventListener("click", encodeValue);
+    document.getElementById("decode").addEventListener("click", decodeValue);
+    document.getElementById("copy").addEventListener("click", () => copyText(output.value, status));
+    document.getElementById("swap").addEventListener("click", () => {
+      const nextInput = output.value;
+      output.value = input.value;
+      input.value = nextInput;
+      updateCounts();
+      setStatus(status, "Input and output swapped.");
+    });
+    document.getElementById("clear").addEventListener("click", () => {
+      input.value = "";
+      output.value = "";
+      updateCounts();
+      setStatus(status, "Cleared.");
+      input.focus();
+    });
+    document.getElementById("decode-jwt").addEventListener("click", decodeJwt);
+    document.getElementById("copy-jwt-json").addEventListener("click", () => copyText(lastJwtJson, jwtStatus));
+    document.getElementById("clear-jwt").addEventListener("click", () => {
+      jwtInput.value = "";
+      jwtHeader.textContent = "{}";
+      jwtPayload.textContent = "{}";
+      jwtSignature.textContent = "No token decoded.";
+      claimSummary.textContent = "";
+      lastJwtJson = "";
+      jwtPartCount.textContent = "0 parts";
+      updateCounts();
+      setStatus(jwtStatus, "Cleared.");
+      jwtInput.focus();
+    });
+
+    input.addEventListener("input", updateCounts);
+    output.addEventListener("input", updateCounts);
+    jwtInput.addEventListener("input", updateCounts);
+    updateCounts();
+  </script>
+</body>
+</html>
